@@ -3,11 +3,14 @@ import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { sendMail } from "./lib/send-mail";
 
+// Initialize MongoDB client
 const client = new MongoClient(process.env.MONGODB_URI as string);
 const db = client.db();
 
+// Configure authentication
 const auth = betterAuth({
     database: mongodbAdapter(db),
+
     user: {
         additionalFields: {
             username: {
@@ -15,23 +18,26 @@ const auth = betterAuth({
                 required: true,
                 unique: true,
                 minLength: 3,
-                maxLength: 32
+                maxLength: 32,
             },
-        }
-    },
-    emailVerification: {
-        autoSignInAfterVerification: true,
-        enabled: true,
-        sendVerificationEmail: async ({ user, url, token }: { user: any, url: any, token: any }) => {
-            const callbackUrl = `${url}&callbackURL=/email-verification`
-            await sendMail({
-                sendTo: user.email,
-                subject: "Verify your email",
-                text: `Verify your email by clicking on the link: ${callbackUrl}`
-            })
         },
     },
+
+    emailVerification: {
+        enabled: true,
+        autoSignInAfterVerification: true,
+        sendVerificationEmail: async ({ user, url }: { user: any; url: string }) => {
+            const verificationLink = `${url}&callbackURL=/email-verification`;
+            await sendMail({
+                sendTo: user.email,
+                subject: "Email Verification Required",
+                text: `Hello,\n\nPlease verify your email by clicking the link below:\n\n${verificationLink}\n\nIf you did not request this, please ignore this email.\n\nThank you.`,
+            });
+        },
+    },
+
     secret: process.env.BETTER_AUTH_SECRET as string,
+
     emailAndPassword: {
         enabled: true,
         disableSignUp: false,
@@ -39,38 +45,39 @@ const auth = betterAuth({
         minPasswordLength: 8,
         maxPasswordLength: 128,
         autoSignIn: true,
-        sendResetPassword: async ({ user, url, token }, request) => {
+        sendResetPassword: async ({ user, url }) => {
             await sendMail({
                 sendTo: user.email,
-                subject: "Reset your password",
-                text: `Click the link to reset your password: ${url}`,
+                subject: "Password Reset Request",
+                text: `Hello,\n\nWe received a request to reset your password. You can do so by clicking the link below:\n\n${url}\n\nIf you did not request this, please disregard this email.\n\nRegards.`,
             });
         },
     },
+
     socialProviders: {
         github: {
             clientId: process.env.GITHUB_CLIENT_ID as string,
             clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
             mapProfileToUser: (profile) => ({
-                username: profile.login
+                username: profile.login,
             }),
         },
         google: {
             clientId: process.env.GOOGLE_CLIENT_ID as string,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
             mapProfileToUser: (profile) => ({
-                username: `${profile.given_name.toLowerCase()}${profile.family_name.toLowerCase()}${Math.floor(100 + Math.random() * 900)}`
+                username: `${profile.given_name.toLowerCase()}${profile.family_name.toLowerCase()}${Math.floor(100 + Math.random() * 900)}`,
             }),
-        }
-
+        },
     },
+
     session: {
         cookieCache: {
             enabled: true,
-            maxAge: 5 * 60,
+            maxAge: 5 * 60, // 5 minutes
         },
     },
-})
+});
 
-export type User = typeof auth.$Infer.Session.user
+export type User = typeof auth.$Infer.Session.user;
 export default auth;

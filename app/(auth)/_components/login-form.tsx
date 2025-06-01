@@ -14,7 +14,6 @@ import { toast } from 'react-toastify'
 import Link from 'next/link'
 import { FiEye, FiEyeOff } from "react-icons/fi";
 
-
 const loginSchema = z.object({
     email: z.string().email({ message: "Invalid email address" }),
     password: z.string().min(6, { message: "Password must be at least 6 characters" }),
@@ -35,11 +34,10 @@ const LoginForm = () => {
     const onSubmit = async (userData: LoginFormValues) => {
         try {
             setIsLoading(true)
-            const { data, error } = await signIn.email({ email: userData.email, password: userData.password, callbackURL: "/" })
+            const { error } = await signIn.email({ email: userData.email, password: userData.password, callbackURL: "/" })
             if (error) {
                 toast.error(error.message)
             } else {
-                console.log(data, "data")
                 toast.success("Login successful")
             }
         } catch (error) {
@@ -78,7 +76,7 @@ const LoginForm = () => {
                             </FormItem>
                         )}
                     />
-                    
+
                     <FormField
                         control={form.control}
                         name="password"

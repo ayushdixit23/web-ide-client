@@ -10,3 +10,4 @@ export const RESTRICTED_PATHS = [
 ];
 
 export const API = process.env.NEXT_PUBLIC_API;
+export const CLOUDFRONT_URL = process.env.NEXT_PUBLIC_CLOUDFRONT_URL;
